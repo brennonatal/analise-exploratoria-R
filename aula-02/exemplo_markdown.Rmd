@@ -1,0 +1,44 @@
+---
+title: "Relatório aula 02"
+author: "Brenno Natal"
+date: "3/2/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Aula 02 - Visualização de dados no R Markdown
+
+Hoje utilizamos um conjunto de dados qque estava na rede.
+Os daods eram do GapMinder. Se você quiser acessa-los, [clique aqui](https://www.stat.ubc.ca/~jenny/notOcto/STAT545A/examples/gapminder/data/gapminderDataFiveYear.txt).
+
+```{r carregando tidyverse, echo=TRUE, include=FALSE}
+library('tidyverse')
+```
+
+```{r gapminder, echo=TRUE, include=FALSE}
+dados <- read_delim( "https://www.stat.ubc.ca/~jenny/notOcto/STAT545A/examples/gapminder/data/gapminderDataFiveYear.txt", delim = "\t")
+```
+
+## Incluindo gráficos
+
+Você pode inserir seus gráficos:
+
+```{r pizza, echo=TRUE}
+a = table(dados$continent)/12
+par(mfrow = c(2,2))
+pie(a , col = c(1:length(a)))
+
+degrade = colorRampPalette(c("red","yellow"))
+pie(a , col = degrade(length(a)))
+
+matiz = colorRampPalette(c("darkgreen", "lightgreen"))
+pie(a , col = matiz(length(a)))
+
+matiz = colorRampPalette(c("#d6006e", "#e89ac3"))
+pie(a , col = matiz(length(a)))
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
