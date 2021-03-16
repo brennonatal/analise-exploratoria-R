@@ -1,0 +1,62 @@
+---
+title: "Varredura com ggplot2"
+output: 
+  flexdashboard::flex_dashboard:
+  orientation: columns
+  social: menu
+  source_code: embed
+  runtime: shiny
+---
+
+```{r global, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+dados <- read_delim("https://www.stat.ubc.ca/~jenny/notOcto/STAT545A/examples/gapminder/data/gapminderDataFiveYear.txt", delim = "\t")
+
+dados$log_LibPerCap <- log(dados$gdpPercap)
+
+dados2 <- select(dados, country, lifeExp, continent, log_LibPerCap)
+```
+
+
+```{r}
+# Reactive that returns the whole dataset if there is no brush
+selectedData <- reactive({
+  data <- brushedPoints(dados2, input$plot1_brush)
+  if (nrow(data) == 0)
+    data <- dados2
+  data
+})
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Expectativa de vida vs. Pib per capita {data-width=600}
+
+```{r}
+library(ggplot2)
+plotOutput("plot1", brush = brushOpts(id = "plot1_brush"))
+output$plot1 <- renderPlot({
+  ggplot(dados2, aes(log_LibPerCap, lifeExp)) + geom_point()
+})
+```
+
+### Expectativa de vida nos continentes
+
+```{r}
+renderPlot({
+  ggplot(selectedData(), aes(continent, lifeExp))  + geom_boxplot()
+})
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Car Details {data-width=400}
+
+```{r}
+renderTable({
+  selectedData()
+})
+```

@@ -1,0 +1,66 @@
+---
+title: "Modelo 2 - Geometrias com qplot"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+dados <- read_delim("https://www.stat.ubc.ca/~jenny/notOcto/STAT545A/examples/gapminder/data/gapminderDataFiveYear.txt", delim = "\t")
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Chart A - Histograma
+
+```{r}
+qplot(x=log(gdpPercap), data=dados, 
+      geom="histogram", 
+      bins=20,
+      main="Histograma do Pib per Capita", 
+      xlab="Pib per Capita")
+```
+
+
+### Uma densidade é um histograma com base infinitesinalmente pequena
+
+```{r}
+qplot(x=log(gdpPercap), data=dados,
+      geom="density",
+      main="Gráfico de densidade - distribuição teórica de dados", 
+      xlab="Pib per Capita")
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Chart C - Exemplo com ggplot
+
+```{r}
+# BOXPLOT
+#qplot(x=log(gdpPercap), data=dados,
+#      geom="boxplot",
+#      main="Boxplot do log(Pib) per Capita",
+#      xlab="Pib per Capita", 
+#      color = 1)
+ggplot(dados, aes(log(gdpPercap), lifeExp)) +
+  geom_point(aes(color = continent)) +
+  geom_smooth(se = FALSE) +
+  labs(title = "Pib per capita por expectativa de vida")
+```
+
+### Chart D - Diagrama de dispersão
+
+```{r}
+qplot(x=log(gdpPercap), 
+      y=lifeExp, 
+      data=dados,
+      geom="point",
+      main="Diagrama de dispersão", xlab="Pib per Capita",
+      ylab="Expectativa de vida")
+```
+

@@ -1,0 +1,45 @@
+---
+title: "Exemplo 1"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+dados <- read_delim("https://www.stat.ubc.ca/~jenny/notOcto/STAT545A/examples/gapminder/data/gapminderDataFiveYear.txt", delim = "\t")
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+a = table(dados$continent)/12
+tom = colorRampPalette(c("lightblue", "darkblue"))
+boxplot(dados$lifeExp ~ dados$continent, col = tom(length(a)), 
+        xlab = "Continentes", 
+        ylab = "Expectativa de vida", 
+        main = 'Gráfico de boxplot')
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+degrade = colorRampPalette(c("red", "yellow"))
+pie(a, col = degrade(length(a)), main = 'Gráfico de setor')
+```
+
+### Chart C
+
+```{r}
+matiz = colorRampPalette(c("darkgreen", "lightgreen"))
+barplot(sort(a,decreasing = TRUE), col = matiz(length(a)), main = 'Gráfico de barras')
+```
+
