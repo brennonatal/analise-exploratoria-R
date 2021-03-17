@@ -1,0 +1,85 @@
+---
+title: "Atividade em Grupo I"
+author: "Brenno Natal, Gulherme Paiva, Murilo Davis e Vitor Costa"
+date: "15/03/2021"
+output: pdf_document
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(tinytex)
+library(knitr)
+library(purrr)
+#install.packages('maps', repos = "http://cran.us.r-project.org")
+library(maps)
+#install.packages("ggmap", repos = "http://cran.us.r-project.org")
+library(ggmap)
+#install.packages('gridExtra')
+library('gridExtra')
+library(viridis)
+register_google(key = 'AIzaSyC3u1fYqAWmU32MpEproAqMNoBSeI0LWtI')
+
+dados <- read_csv('weatherAUS.csv')
+
+
+```
+
+## Questões
+
+**1)** Faça uma rápida apresentação dos dados, explicando como foram obtidos, problema de pesquisa entre outros.
+
+
+### Resposta 1)
+Apresentacao: coletamos um conjunto de dados sobre as chuvas na Australia.
+Dados Obtidos do Kaggle. [Acsse o link aqui](https://www.kaggle.com/jsphyg/weather-dataset-rattle-package)
+Problema da pesquisa; Analisar periodos, locais, precipitacao e direcao do vento
+
+**2)** No primeiro *chunk* apresente um fragmento dos dados, com as 4 primeiras variáveis e as 10 primeiras linhas. Os códigos utilizados, neste item, não podem aparecer no documento compilado.
+
+### Resposta 2)
+
+
+```{r chunk1, include=TRUE, echo=FALSE}
+dados_cut <- dados %>% filter(Date > '2015-12-31' & Date < '2017-01-01')  %>% select(Date, Location, Rainfall, WindGustSpeed)
+
+knitr::kable(
+  dados_cut[1:10,1:4],
+  col.names = c('data', 'local', 'precipitacao', 'vel_vento')
+)
+
+
+```
+
+**3)** No segundo *chunk* apresente um gráfico adequado para cada uma das 4 primeiras variáveis apresentadas. 
+Adote como regra que categorias com maiores frequências devem ter mais preto adicionado à cor. Se o grupo optar por clarear a cor, façam o contrário, categorias menos frequentes devem ter mais branco adicionado à cor. 
+Os gráficos devem estar apresentados em um partição do tipo **2 x 2**. O código utilizado, neste item, precisa aparecer no documento compilado.
+
+### Resposta 3)
+
+```{r chunk2, warning=FALSE}
+p1 <- ggplot(dados_cut) + geom_line(aes(x = Date, y = Rainfall, color = Rainfall)) + scale_fill_grey(start = 0.2, end = 0.8)
+
+myMap <- get_map(location = "Australia", zoom = 4)
+df <- world.cities[world.cities$country.etc == "Australia",]
+
+names<- df$name
+df$Location <- names
+df$name <- NULL
+df$pop <- NULL
+df$country.etc <- NULL
+df$capital <- NULL
+final <- merge(dados_cut, df, by ='Location')
+
+p2 <- ggmap(myMap) + geom_point(data = final[, c("long","lat","Rainfall")], aes(x=long, y = lat, size = Rainfall, colour = Rainfall))
+
+p3 <- ggplot(dados_cut, rm.na = TRUE) + geom_col(aes(x = WindGustSpeed, y = Rainfall, fill = WindGustSpeed))
+
+p4 <- ggplot(dados_cut) + geom_bin2d(aes(x = WindGustSpeed, y = Location, color = Rainfall)) 
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```

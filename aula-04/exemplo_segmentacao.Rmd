@@ -1,0 +1,42 @@
+---
+title: "Segmentação"
+author: "Brenno Natal"
+date: "3/16/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Segmentação
+
+Verificou-se, em 6 municípios a participação percentual (*share*) de duas marcas de *home theater* nas vendas realizadas nesses municípios.
+**Variáveis**: 
+		X1: participação (%) da marca I
+		X2: participação (%) da marca II
+
+```{r exemplo, include=FALSE}
+municipios = c('Bragança', 'Poá', 'Piracaia', 'Itupeva', 'Dracena', 'Santos')
+x1 = c(3.3, 4.7, 4.3, 3.7, 4, 4.7)
+x2 = c(28.5, 33, 45, 27, 46.5, 30)
+dados = data.frame(municipios, x1, x2, row.names = 1)
+
+library(tidyverse)
+library(knitr)
+
+kable(dados)
+```
+
+
+```{r exemplo2, echo=FALSE}
+kable(dados)
+```
+
+
+```{r exemplo3, echo=FALSE}
+distancia = dist(scale(dados)) 
+h  = hclust(distancia) 
+plot(h, ylab='distância')
+rect.hclust(h,3)
+```
