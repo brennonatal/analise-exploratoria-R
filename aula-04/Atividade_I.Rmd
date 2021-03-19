@@ -10,6 +10,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+source(apiKey.R)
 library(tidyverse)
 library(ggplot2)
 library(tinytex)
@@ -22,7 +23,7 @@ library(ggmap)
 #install.packages('gridExtra')
 library('gridExtra')
 library(viridis)
-register_google(key = 'AIzaSyC3u1fYqAWmU32MpEproAqMNoBSeI0LWtI')
+register_google(key = apiKey)
 
 dados <- read_csv('weatherAUS.csv')
 
