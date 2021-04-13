@@ -1,0 +1,78 @@
+---
+title: "Posicionamento"
+author: "Brenno Natal"
+date: "4/6/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include=FALSE, echo=FALSE}
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(factoextra)
+```
+
+## Companhias aéreas
+
+Vamos construir um mapa de posicionamento das companhias aéreas.
+
+
+```{r, include=FALSE, echo=TRUE}
+
+companhias <- read_xlsx('companhias.xlsx')
+dados <- data.frame(companhias, row.names = 1)
+
+```
+
+```{r tabela, echo=FALSE}
+kable(dados)
+```
+
+### Componentes principais
+
+A grosso modo, os componentes principais são vetores que indicam a direção
+de espalhamento dos dados no espaço.
+
+```{r mapa, echo=FALSE, warning=FALSE}
+resultado.pca <- prcomp(dados)
+fviz_pca_biplot(resultado.pca, repel = TRUE,
+                col.var = "#2E9FDF", # Cor das variáveis
+                col.ind = "#696969"   # Cor dos indivíduos
+)
+```
+
+### Análise
+
+Do ponto de vista de diferenciação:
+Southwest: se diferencia em pontualidade;
+United: se diferencia em serviço de bordo;
+American: se diferencia em conforto.
+
+**Observação** a tamanho do vetor (módulo) indica o quão importante é o atributo
+dentro da análise. Em ordem de relevância, temos: convêniencia, serviço 
+e pontualidade, por último conforto.
+
+### Referências
+
+Bons mapas precisam explicar de forma bivariada mais do que 70% da 
+variabilidade total dos dados.
+Neste caso, a explicação é de 66.3% + 24.5% = 90.8% que é uma
+excelente explicação.
+
+```{r qualidade, echo=FALSE}
+fviz_pca_ind(resultado.pca,
+             col.ind = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE
+)
+```
+
+Note que as companhias Southwest, Continental e USA Airways são as mais bem 
+representadas no mapa bidimensional, enquanto que a United e a American 
+estão bem mais distantes do planos.
+
+
