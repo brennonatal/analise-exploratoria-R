@@ -1,0 +1,119 @@
+---
+title: "Exercicios"
+author: "Brenno Natal"
+date: "4/20/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercício 1 - Moedas
+
+Você recebeu uma base monetária com o valor do papel-moeda emitido em milhões de guaranis e o valor dos depósitos que foram realizados no Banco Central do Paraguai. O problema aqui é estudar se a emissão de papel-moeda está gerando um aumento nos depósitos do Banco Central do Paraguai.
+
+Responda as perguntas apenas considerando os dados do Paraguai.
+
+**a)** Calcule a correlação para o problema e descreva a relação entre papel-moeda emitido e depósitos no Banco Central do Paraguai  através de um gráfico.
+
+
+```{r leitura, include = FALSE}
+library(readxl)
+setwd("E:/Aulas-2021-01/Análise exploratória - TECH")
+dados = read_xlsx("Reg2.xlsx")
+x <- dados$Emissão
+y <- dados$Depósitos
+```
+
+
+```{r descricao, echo = FALSE}
+library(ggplot2)
+
+ggplot(dados, aes(x=x,y=y)) +  geom_point(alpha = 0.3, size = 2)+
+labs(title = "Emissão de papel-moeda e depósitos no Paraguai",
+       x = "Emissão de papel-moeda",
+       y = "Depósitos") 
+
+cat("A correlação é", round(cor(x,y),2), "\n")
+```
+
+#### Resposta
+
+O diagrama mostra que à medida que a emissão de moeda aumenta, o BC do Paraguai realiza maiores depósitos compulsórios.
+
+Já a correlação igual a 0,90 indica que a associação entre as variáveis é forte.
+
+
+
+**b)** Teste se há relação linear (apenas). Só transcreva a tabela com os resultados dos testes para os coeficientes de regressão e analise-a.
+
+
+```{r funcao, echo = FALSE}
+linear = function(x,y,alfa){
+  mod = lm(y ~ x)
+  res = summary(mod)
+  if(res$coefficients[2,4] >= alfa){
+    cat("Não há relação entre x e y,", "y =", 
+        round(mean(y),2), "\n")
+  }else{
+    if(res$coefficients[1,4] >= alfa){
+      mod = lm(y ~ x - 1)
+      res = summary(mod)
+      cat("A equação é: y =", res$coefficients[1], "*x", "\n")
+    }else{
+      cat("A equação (1) é: y =", res$coefficients[1,1],
+          "+", res$coefficients[2,1], "*x", "\n")
+      cat("Ou a equação (2) é: y =", mean(y),
+          "+", res$coefficients[2,1], "*(x -",  mean(x), ")",
+          "\n")
+    }
+  }
+}
+
+linear(x,y, 0.05)
+```
+
+```{r inferencia, include = FALSE}
+modelo = lm(y ~ x - 1) 
+resumo = summary(modelo)
+# Para obter os coeficientes com duas casas decimais
+tabela1 = round(resumo$coefficients,2) 
+# Para obter os LI e LS dos coeficientes com duas casas decimais
+tabela2 = round(confint(modelo, level = 0.95),2) 
+library(knitr)
+```
+
+```{r tabelas, echo = FALSE}
+kable(tabela1)
+kable(tabela2)
+```
+
+#### Resposta
+A tabela 2 mostra que a relação é significativa porque os limites inferior e superior são positivos.
+
+**c)** Interprete os coeficientes de regressão, descrevendo os intervalos de variação dos coeficientes. 
+
+#### Resposta
+
+A equação é *y = 0.57x*. O coeficiente angular é 0.57 que indica *acréscimo médio dado em y por unidade de x*. Especificamente, 0.57 é o acréscimo médio dado aos depósitos quando a emissão de papel aumenta em uma unidade que pode ser qualquer valor entre 0.55 e 0.58 com confiança de 95% (segundo a Tabela 2).
+
+**d)** Suponha que para conter a inflação (é claro que essa ideia está sendo estudada em ceteris paribus) é necessário que para cada valor de papel-moeda emitido seja necessário o mesmo valor em depósitos (reservas). Com base na inclinação da equação obtida no item (c), você acredita que a equação sinaliza inflação ou deflação? Justifique. 
+
+#### Resposta
+
+Se o coeficiente angular, digamos b1 = 1, teríamos o cenário de estabidade.
+
+No nosso caso, para cada guarani emitido, temos 0.57 em depósitos. No período,
+havia mais emissão de papel-moeda do que depósitos, indicando um cenário inflacionário.
+
+b1 > 1: deflação
+
+b1 ~ 1: estabilidade (o intervalo da Tabela 2 deveria conter o valor 1)
+
+b1 < 1: inflação.
+
+
+
+
+

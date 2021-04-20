@@ -1,0 +1,166 @@
+---
+title: "Regressão simples"
+author: "Brenno Natal"
+date: "20/04/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Regressão linear simples - SAC vs Confiança
+
+Uma pesquisa foi realizada, a fim de investigar as relações entre confiança, lealdade, comprometimento e intenção de recompra.
+
+O estudo foi realizado com consumidores de TV por assinatura e de diferentes provedores de serviço, em 2015.
+
+### Etapa descritiva
+
+A) Construa o diagrama de dispersão entre SAC (complaint handling) e confiança (trust).
+B) Calcule a correlação e analise-a.
+
+```{r leitura, include = FALSE}
+library(readxl)
+
+dados = read_xlsx("Reg1.xlsx")
+x <- dados$SAC
+y <- dados$CONFIANÇA
+```
+
+
+```{r descricao, echo = FALSE}
+#plot(y ~ x, 
+#       main = "Estudo do impacto do SAC na confiança",
+#       xlab = "SAC",
+#       ylab = "Confiança" )
+
+# Para o cálculo do coeficiente de correlação linear:
+#round(cor(x,y),2)
+
+library(ggplot2)
+#library(hexbin)
+#library(ggpointdensity)
+# stat_binhex()
+# geom_pointdensity() + scale_color_viridis_c()
+
+ggplot(dados, aes(x=x,y=y)) +  geom_point(alpha = 0.3, size = 3)+
+labs(title = "Estudo do impacto do SAC na confiança",
+       x = "SAC",
+       y = "Confiança") 
+
+```
+
+### Análise
+
+O diagrama mostra que à medida que a nota dada ao SAC aumenta, a nota
+dada à também parece aumentar.  
+Já a correlação igual a 0,56 indica que a associação tem intensidade
+moderada.  
+Nesse gráfico específico, quanto mais escura a cor do ponto, mais repetições existem naquela posição.
+
+### Etapa inferencial
+
+C) Encontre a equação de regressão e interprete a inclinação da reta.
+
+```{r inferencia, include = FALSE}
+modelo = lm(y ~ x) 
+resumo = summary(modelo)
+# Para obter os coeficientes com duas casas decimais
+tabela1 = round(resumo$coefficients,2) 
+# Para obter os LI e LS dos coeficientes com duas casas decimais
+tabela2 = round(confint(modelo, level = 0.95),2) 
+library(knitr)
+```
+
+```{r tabelas, echo = FALSE}
+kable(tabela1)
+kable(tabela2)
+```
+
+### Análise
+Os valores-p aparecem na última coluna da Tabela 1, são menores do que 5% indicando que há relação entre as variáveis (segunda linha) e o 
+intercepto deve aparecer na composição final da equação (primeira linha).
+
+A equação preliminar fica:
+
+**y = 1.40 + 0.59x**
+
+O coeficiente angular é o valor = 0.59 que indica o *acréscimo médio dado em y por unidade de x*. Especificamente, 0.59 é o acréscimo médio dado à confiança quando a nota dada ao SAC aumenta em uma unidade que pode ser qualquer valor entre 0.47 e 0.70 com confiança de 95% (segundo a Tabela 2).
+
+O coeficiente linear não faz sentido porque a escala Likert só varia entre 1 e 5. Ela não está definida no valor x = 0.
+Na próxima aula, vamos estudar como centralizar a equação e obter um intercepto que faça sentido.
+
+```{r funcao, echo = FALSE}
+linear = function(x,y,alfa){
+  mod = lm(y ~ x)
+  res = summary(mod)
+  if(res$coefficients[2,4] >= alfa){
+    cat("Não há relação entre x e y,", "y =", 
+        round(mean(y),2), "\n")
+  }else{
+    if(res$coefficients[1,4] >= alfa){
+      mod = lm(y ~ x - 1)
+      res = summary(mod)
+      cat("A equação é: y =", res$coefficients[1], "*x", "\n")
+    }else{
+      cat("A equação (1) é: y =", res$coefficients[1,1],
+          "+", res$coefficients[2,1], "*x", "\n")
+      cat("Ou a equação (2) é: y =", mean(y),
+          "+", res$coefficients[2,1], "*(x -",  mean(x), ")",
+          "\n")
+    }
+  }
+}
+
+linear(x,y, 0.05)
+```
+
+Do ponto de vista preditivo, tanto faz a equação 1 ou a equação 2. Do ponto de vista de modelagem, ambos os coeficientes precisam fazer sentido.
+
+O novo coeficiente linear na equação 2 representa o valor esperado
+da confiança (no provedor de internet), quando a nota dada ao SAC for igual a média das avaliações de SAC.
+
+O coeficiente angular não é alterado pelo centralização porque o processo é uma translação (deslocamento) de eixo. Os dados são transladados para o entorno do eixo y. 
+
+FIM DA REGRESSÃO SIMPLES
+
+### Observações - Diagnóstico
+
+O diagnóstico serve para melhoria do modelo de regressão.
+
+O teste Reset é usado para verificar linearidade. A hipótese nula é
+Ho: é linear (se o valor-p obtido for maior do que 5%, o modelo é linear).
+
+O teste de Shapiro-Wilk é um teste de normalidade. A hipótese nula é
+Ho: é normal.
+
+O teste de Breusch-Pagan é um teste para verificar se a variabilidade
+é constante para todo valor de x. A hipótese nula é: Ho: variabilidade constante.
+
+Em todos os três testes esperamos encontrar um valor-p maior do que 5%.
+
+
+```{r diagnóstico, echo = TRUE, warning= FALSE}
+##### Diagnóstico  #####
+par(mfrow=c(2,2)) # Análise gráfica  #
+plot(modelo)
+
+library(lmtest)
+# Teste de linearidade #
+# Ho: é linear
+resettest(modelo) 
+
+# Teste de normalidade #
+shapiro.test(rstudent(modelo)) 
+
+# Teste de homoscedasticidade # 
+library(lmtest) # É necessário carregar essa biblioteca
+bptest(modelo, 
+       varformula = ~ rstudent(modelo), 
+       studentize=TRUE)
+```
+
+A análise final mostra que o valor-p para o teste de variabilidade constante não se confirmou, indicando que alguma medida deveria ser aplicada para corrigir o problema.
+
+
