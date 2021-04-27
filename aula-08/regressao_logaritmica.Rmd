@@ -1,0 +1,163 @@
+---
+title: "Regressão logarítmica"
+author: "Brenno Natal"
+date: "27/04/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercício 2 - IDH x PIB per capita
+
+Puxado pela educação, Brasil agora é 79º no ranking de desenvolvimento humano da ONU. 
+ 
+Em 2012 estava em 85º. Ranking foi divulgado na madrugada desta quinta-feira no Japão. 
+ 
+O Índice de Desenvolvimento Humano (IDH) do Brasil em 2013 foi 0,744 numa escala que vai de 0 a 1. 
+ 
+O índice é usado como referência da qualidade de vida e desenvolvimento sem se prender apenas em índices econômicos.
+
+
+**a) Elabore um gráfico de IDH versus PIB per capita. Interprete o diagrama.**
+
+
+```{r leitura, include = FALSE}
+library(readxl)
+dados = read_xlsx("mundo.xlsx")
+x = dados$`PIB per capita - 2013 (US$)`
+y = dados$`IDH-2013`
+local = dados$Localização
+```
+
+```{r grafico1, echo = FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+library(ggplot2)
+ggplot(dados, aes(x=x,y=y)) + geom_point(size = 2, alpha = 0.4, aes(color = local)) + 
+labs(title = "Relação entre IDH e PIB",
+     x = "PIB per capita - 2013 (US$)",
+     y = "IDH-2013")
+```
+
+O diagrama mostra claramente que a relação entre IDH e PIB não é linear. O IDH é uma variável limitada superiormente (nunca vai ultrapassar o valor 1) e o PIB pode aumentar livremente.
+
+Transformar o PIB com a aplicação do LOG, provavelmente,
+deixará a relaçao linear.
+
+**b) Calcule o R² e compare o ajuste linear com algum ajuste não linear.**
+
+```{r r2, echo = FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+R2_linear = round(cor(x,y)^2,2)     # Ajuste linear
+R2_log = round(cor(log(x),y)^2,2)   # Ajuste logarítmico
+R2 = data.frame(R2_linear,R2_log)
+library(knitr)
+kable(R2)
+
+```
+
+O R² de um modelo logarítmico é maior do que o R² de um modelo linear,
+indicando que aplicar o log em x, resultará em um melhor ajuste.
+
+**c) Construa um novo diagrama com a solução linearizada.**
+
+```{r grafico2, echo = FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+library(ggplot2)
+ggplot(dados, aes(x=log(x),y=y)) + geom_point(size = 2, alpha = 0.4, aes(color = local)) + 
+labs(title = "Relação entre IDH e PIB",
+     x = "log(PIB per capita) - 2013 (US$)",
+     y = "IDH-2013")
+```
+
+Observe que após a transformação com o log, o problema passou a 
+ser linear e a técnica de regressão linear poderá ser utilizada
+nesses dados.
+
+**d) Encontre a reta de regressão e apresente os testes de hipóteses e suas conclusões.**
+
+```{r modelo, include = FALSE}
+modelo = lm(y ~ log(x)) 
+resumo = summary(modelo)
+tabela1 = round(resumo$coefficients,2) 
+tabela2 = round(confint(modelo, level = 0.95),2) 
+```
+
+```{r tabelas, echo = FALSE}
+kable(tabela1)
+kable(tabela2)
+```
+
+Como ambos os valores-p que aparecem na última coluna da Tabela 1 são
+menores do que 5%, há relação entre PIB e IDH e que o intercepto deve
+permanecer como suporte da equação.
+
+A equação fica *y = -0.17 + 0.10log(x)*.
+
+**e) Interprete os coeficientes. A interseção faz sentido nesse estudo? Encontre um valor com significado para o problema.**
+
+
+```{r funcao, echo = FALSE}
+logaritmo = function(x,y,alfa){
+  mod = lm(y ~ log(x))
+  res = summary(mod)
+  if(res$coefficients[2,4] >= alfa){
+    cat("Não há relação entre x e y,", "y =", 
+        round(mean(y),2), "\n")
+  }else{
+    if(res$coefficients[1,4] >= alfa){
+      mod = lm(y ~ log(x) - 1)
+      res = summary(mod)
+      cat("A equação é: y =", res$coefficients[1], "*log(x)", "\n")
+      sol = round(confint(mod, level = 1-alfa),3) 
+      print(sol)
+    }else{
+      cat("A equação é: y =", mean(y),
+          "+", res$coefficients[2,1], "*(log(x) -",  mean(log(x)), ")",
+          "\n")
+      nova = log(x) - mean(log(x))
+      mod2 = lm(y ~ nova)
+      sol = round(confint(mod2, level = 1-alfa),3)
+      print(sol)
+      cat("\n")
+      
+      cat("A equação é: y =", res$coefficients[1,1],
+          "+", res$coefficients[2,1], "*log(x)", "\n")
+      sol = round(confint(mod, level = 1-alfa),3) 
+      print(sol)
+    }
+  }
+  
+}
+
+logaritmo(x,y,0.05)
+
+```
+
+Como o IDH não pode ser negativo, vamos utilizar a solução centralizada  *y = 0.6841957 + 0.09916542 (log(x) - 8.630718 )*.
+
+As interpretações dos coeficientes são as mesmas da regressão linear:
+
+0.68 é o valor esperado do IDH de um país que tiver log(PIB) igual a média = 8.63, que pode ser qualquer valor entre 0.676 e 0.692 com 95% de confiança.
+
+0.10 (0.09916542) indica o acréscimo médio dado ao IDH quando
+o log(PIB) aumenta em uma unidade, que pode ser qualquer valor entre
+0.094 e 0.105 com 95% de confiança.
+
+**Conclusão:** como o IDH não podia ser negativo foi utilizado o modelo centralizado. Já para previsão, tanto faz utilizar o modelo centralizado ou não. Aliás, é mais fácil utilizar o modelo não centralizado.
+
+Outro ponto é que o coeficiente angular não é modificado pelo processo de centralização.
+
+**Exemplo de previsão** Suponha que eu queira prever o IDH de um país com PIB per capita de US$ 10.000. Como proceder?
+
+```{r previsao, echo = FALSE}
+newdata = data.frame(x = c(10000)) 
+prev = predict(modelo, newdata, interval = "confidence", level= 0.95)
+kable(round(prev,3))
+```
+
+O valor que aparece em "fit" é o valor médio. Já os valores 0.733 e 0.750 indicam os limites inferior (lwr) e superior (upr) com 95% de confiança.
+
+
+
+
+
+
