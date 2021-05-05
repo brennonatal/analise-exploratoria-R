@@ -1,0 +1,115 @@
+---
+title: "Regressão exponencial"
+author: "Brenno Natal"
+date: "04/05/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Caso Nielsen - categoria de energéticos - setor de bebidas
+
+*Scanners* eletrônicos utilizados nas caixas registradoras das lojas do varejo coletam dados que são usados em uma série de aplicações de pesquisa de marketing. 
+
+Por exemplo, fornecedores de dados como a *Nielsen* compram dados colhidos por *scanners* eletrônicos localizados em pontos de venda de diversos pontos de venda, processam esses dados e depois vendem seus resumos estatísticos a empresas de diversos setores. 
+
+Essas empresas gastam centenas de milhares de dólares por categoria de produto para ter acesso a esse tipo de informação. 
+
+Suponha que para um determinado  período, a Nielsen tenha coletado dados do valor das vendas de uma promoção conhecida como **redução temporária de preço (TPR)**.
+
+Além disso, no mesmo período em que ocorreu a promoção, foi realizado o cálculo da **distribuição numérica da promoção**, que nada mais é do que a divisão da quantidade de pontos de venda que recebeu a promoção pela quantidade de pontos de venda avaliados pela Nielsen.
+
+**Faça:**
+
+
+**a) Construa um diagrama de dispersão entre as variáveis distribuição numérica da TPR e vendas em valor real da TPR, a fim de avaliar o impacto da distribuição sobre o valor das vendas, em  valor, desta promoção.**
+
+
+```{r leitura, include = FALSE}
+library(readxl)
+setwd("E:/Aulas-2021-01/Análise exploratória - TECH")
+dados = read_xlsx("nielsen.xlsx")
+x = dados$distribuicao
+y = dados$vendas
+```
+
+```{r grafico1, echo = FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+library(ggplot2)
+ggplot(dados, aes(x=x,y=y)) + geom_point(size = 2, alpha = 0.3) + 
+labs(title = "Impacto das vendas em relação à distribuição",
+     x = "Distribuição numérica",
+     y = "Vendas em valor")
+```
+
+À medida que a promoção atinge mais pontos de venda, as vendas em valor passam a aumentar exponencialmente.
+
+**b) Calcule o R2 do modelo exponencial e compare com o R2 do linear.**
+
+
+```{r r2, echo = FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+R2_linear = round(cor(x,y)^2,2)     # Ajuste linear
+R2_exp = round(cor(x,log(y))^2,2)   # Ajuste logarítmico
+R2 = data.frame(R2_linear,R2_exp)
+library(knitr)
+kable(R2)
+```
+
+Após a comparação das duas modelagens, percebemos que a modelagem
+exponencial apresenta maior percentual (73%) de explicação das vendas em valor do que a modelagem linear (63%).
+
+**c) Obtenha a equação de regressão e interprete-a.**
+
+```{r funcao, echo = FALSE}
+exponencial = function(x,y,alfa){
+  mod = lm(log(y) ~ x)
+  res = summary(mod)
+  if(res$coefficients[2,4] >= alfa){
+    cat("Não há relação entre x e y,", "y =", 
+        round(mean(y),2), "\n")
+  }else{
+    if(res$coefficients[1,4] >= alfa){
+      mod = lm(log(y) ~ x - 1)
+      res = summary(mod)
+      if(res$coefficients[1]>0){
+      
+      cat("A equação é: y =exp(",res$coefficients[1], "*x)", "\n")
+      sol = round(exp(confint(mod, level = 1-alfa)) - 1,3) 
+      print(sol)
+      }else{
+        cat("A equação é: y =exp(",res$coefficients[1], "*x)", "\n")
+        sol = round(exp(1-confint(mod, level = 1-alfa)),3) 
+        print(sol)
+      }
+    
+    }else{
+      cat(" Se b1 < 0, desconsidere o sinal negativo", "\n")
+      cat(" que aparecerá nos limites da taxa.", "\n")
+      cat("A equação é: y =", exp(mean(log(y))),
+          "*exp(", res$coefficients[2,1], "* (x -",  mean(x), ") )",
+          "\n")
+      nova = x - mean(x)
+      mod2 = lm(log(y) ~ nova)
+      sol = round(exp(confint(mod2, level = 1-alfa))-1,3)
+      print(sol)
+      cat("\n")
+      
+      cat("A equação é: y =", exp(res$coefficients[1,1]),
+          "*exp(", res$coefficients[2,1], "* x)", "\n")
+      sol = round(exp(confint(mod, level = 1-alfa))-1,3) 
+      print(sol)
+    }
+  }
+}
+
+exponencial(x,y,0.05)
+```
+
+A equação de regressão exponencial será **y = 6.0932 exp( 0.03261304 x)**,
+em que o valor *6.0932* indica as vendas médias quando nenhum (x = 0 ) ponto de venda recebeu a promoção de redução temporária de preço.
+
+E para sabermos em qual taxa as vendas evoluem por ponto de venda adicional,
+é preciso **round((exp( 0.03261304) - 1)*100,2) = 3.32%** que é a taxa média de crescimento das vendas por ponto de venda que receber a promoção.
+
